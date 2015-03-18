@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/lucapernini/Desktop/Luca/Sotfwares/Eclipse/sdk/extras/android/m2repository/com/android/support/support-v4/19.1.0/support-v4-19.1.0.jar"
+        jumboMode="false"
+        revision="21.1.1"
+        sha1="85f201b380937e61a9dce6ca90ccf6872abbfb67">
+        <dex dex="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/support-v4-19.1.0-077324e57e09075c103066b4f937f62e97b2dc6d.jar" />
+    </item>
+    <item
+        jar="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/libs/libsvm.jar"
+        jumboMode="false"
+        revision="21.1.1"
+        sha1="5a763e981994e688c5a764630277a4a41ff980f6">
+        <dex dex="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/libsvm-cc283d01cb45ebf65de96f1610ab397016a6351f.jar" />
+    </item>
+
+</items>
