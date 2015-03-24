@@ -6,6 +6,7 @@
     android:background="@drawable/background" >
 
 
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -33,6 +34,8 @@
 
     </LinearLayout>
 
+
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -59,6 +62,15 @@
 
 
     </LinearLayout>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/cancel_falls_list_button"
+        android:text="Detele List"
+        android:layout_gravity="right"
+        android:layout_marginRight="5dp"
+        />
 
 
     <TextView

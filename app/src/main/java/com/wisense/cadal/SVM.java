@@ -29,21 +29,23 @@ import libsvm.svm_problem;
 
 /**
  * Created by lucapernini on 12/03/15.
+ * Handle and use the SVM library method, including the training
  */
 public class SVM {
 
     static String TAG="FALL_DETECTION";
+    final static boolean DEBUG=true;
 
     Context cont;
 
     private svm_problem prob;
     private svm_parameter param;
     private int cross_validation;
-    private int nr_fold;
+    private int nr_fold;  //not used
     private String error_msg;
 
     private svm_model model;
-    private String input_file_name;		// set by parse_command_line
+    private String input_file_name;		// set by parse_command_line, not used
     private String model_file_name="fall_training_set___.model";
 
     static final String svm_type_table[] =
@@ -60,6 +62,10 @@ public class SVM {
         cont=context;
     }
 
+    /**
+     * load the problem
+     * @throws IOException
+     */
     private void read_problem() throws IOException
     {
         File root = android.os.Environment.getExternalStorageDirectory();
@@ -71,11 +77,11 @@ public class SVM {
 
         if(file.exists())
         {
-            Log.d(TAG,"SVM: generating model based on new training set");
+            if(DEBUG) Log.d(TAG,"SVM: generating model based on new training set");
             inputStream=new FileInputStream(file);
             fp=new BufferedReader(new FileReader(file));
         } else {
-            Log.d(TAG,"SVM: generating model based on default training set");
+            if(DEBUG) Log.d(TAG,"SVM: generating model based on default training set");
             inputStream = cont.getResources().openRawResource(R.raw.fall_training_set___);
             fp = new BufferedReader(new InputStreamReader(inputStream));
         }
@@ -210,6 +216,11 @@ public class SVM {
         }
     }
 
+    /**
+     * Functions to call for train and update the svm model
+     * @param update_svm
+     * @throws IOException
+     */
     public void train(boolean update_svm) throws IOException{
 
         File root = android.os.Environment.getExternalStorageDirectory();
@@ -236,6 +247,12 @@ public class SVM {
         }
     }
 
+    /**
+     * Save the model
+     * @param model_file_name (not used now, simply a String)
+     * @param model
+     * @throws IOException
+     */
     public static void svm_save_model(String model_file_name, svm_model model) throws IOException
     {
         File root = android.os.Environment.getExternalStorageDirectory();
@@ -326,6 +343,12 @@ public class SVM {
         fp.close();
     }
 
+    /**
+     * Read the header of the model file
+     * @param fp BufferedReader of the file
+     * @param model
+     * @return
+     */
     private static boolean read_model_header(BufferedReader fp, svm_model model)
     {
         svm_parameter param = new svm_parameter();
@@ -439,6 +462,12 @@ public class SVM {
         return true;
     }
 
+    /**
+     * Load the model, not used
+     * @param fp
+     * @return
+     * @throws IOException
+     */
     public static svm_model svm_load_model(BufferedReader fp) throws IOException
     {
         // read parameters
@@ -484,6 +513,12 @@ public class SVM {
         return model;
     }
 
+    /**
+     * Read the test
+     * @param test
+     * @return
+     * @throws IOException
+     */
     public boolean read_test(String test) throws IOException{
 
         boolean fall=false;
@@ -546,9 +581,17 @@ public class SVM {
         return fall;
     }
 
+    /**
+     * function to call for do a prediction on the features of a new event
+     * @param input BufferedReader
+     * @param output DataOutputStream
+     * @param model svm_model
+     * @param predict_probability int
+     * @return boolean return if the fall is detected or not
+     */
     private static boolean predict(BufferedReader input, DataOutputStream output, svm_model model, int predict_probability)
     {
-        Log.d(TAG,"SVM: predicting");
+        if(DEBUG) Log.d(TAG,"SVM: predicting");
         boolean fall_detected=false;
         int correct = 0;
         int total = 0;
@@ -561,7 +604,7 @@ public class SVM {
 
         if(predict_probability == 1)
         {
-            //Log.d(TAG,"rigo 542");
+            //if(DEBUG) Log.d(TAG,"rigo 542");
             if(svm_type == svm_parameter.EPSILON_SVR ||
                     svm_type == svm_parameter.NU_SVR)
             {
@@ -577,7 +620,7 @@ public class SVM {
                     for(int j=0;j<nr_class;j++) {
                         output.writeBytes(" " + labels[j]);
 //                        if(labels[j]==2) fall_detected=true;
-//                        Log.d(TAG, "LABEL: " + labels[j]);
+//                        if(DEBUG) Log.d(TAG, "LABEL: " + labels[j]);
                     }
                     output.writeBytes("\n");
                 } catch (IOException e) {
@@ -588,7 +631,7 @@ public class SVM {
         while(true)
         {
             try {
-                //Log.d(TAG,"rigo 569");
+                //if(DEBUG) Log.d(TAG,"rigo 569");
                 String line = input.readLine();
                 if(line == null) break;
 
@@ -607,9 +650,9 @@ public class SVM {
                 double v;
                 if (predict_probability==1 && (svm_type==svm_parameter.C_SVC || svm_type==svm_parameter.NU_SVC))
                 {
-                    //Log.d(TAG,"rigo586"); QUI NON ENTRA
+                    //if(DEBUG) Log.d(TAG,"rigo586"); QUI NON ENTRA
                     v = svm.svm_predict_probability(model,x,prob_estimates);
-                    Log.d(TAG,"v: "+v);
+                    if(DEBUG) Log.d(TAG,"v: "+v);
                     try {
                         output.writeBytes(v+" ");
                         for(int j=0;j<nr_class;j++) {
@@ -626,7 +669,7 @@ public class SVM {
                 {
                     v = svm.svm_predict(model, x);
                     try {
-                        Log.d(TAG,"svm_predict: v="+v);
+                        if(DEBUG) Log.d(TAG,"svm_predict: v="+v);
                         if(v==1) fall_detected=true;
 
                         output.writeBytes(v+"\n");
@@ -664,6 +707,9 @@ public class SVM {
         return fall_detected;
     }
 
+    /**
+     * Return the Date in yyyyMMdd_HHmm format
+     */
     public String getDate(){
 
         Date date=new Date();

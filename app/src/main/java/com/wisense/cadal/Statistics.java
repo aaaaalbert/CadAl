@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 /**
  * Created by lucapernini on 12/03/15.
+ * Some useful statistical functions
  */
 public class Statistics
 {

@@ -1,51 +1,48 @@
 package com.wisense.cadal;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import android.app.Activity;
-
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.ListFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
-import android.os.AsyncTask;
-import android.os.Build;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.sax.StartElementListener;
-import android.support.v4.widget.DrawerLayout;
-import android.webkit.WebView.FindListener;
-import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
+import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
-	
 
-
+    /**
+     * Debug
+     */
+    static final boolean DEBUG=true;
 	static String TAG="FALL_DETECTION";
+
+    /**
+     * For foreground feature of service
+     */
 	static final String ACTION_FOREGROUND="com.wisense.cadal.FallDetectionService.FOREGROUND";
 	
 	
@@ -64,6 +61,8 @@ public class MainActivity extends Activity
      */
     static ImageButton onOffButton;
     static TextView onOffTV;
+    static TextView nrFallsTV;
+    static TextView nrCancFallsTV;
     
     /**
      * Flags
@@ -73,7 +72,19 @@ public class MainActivity extends Activity
     /**
      * Classes
      */
-    
+
+    /**
+     * Preferences
+     */
+    public int countdown;
+    public String name;
+    public boolean train;
+    public boolean trainfalse;
+    public boolean traintrue;
+    public boolean notification;
+    public String relnr1;
+    public String relnr2;
+    public String msg;
     
 
     @Override
@@ -90,9 +101,7 @@ public class MainActivity extends Activity
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
         
-        /**
-         * Views initializations
-         */
+
        
         
     }
@@ -104,6 +113,12 @@ public class MainActivity extends Activity
 		// TODO Auto-generated method stub
 		super.onResume();
 		Log.d(TAG,"MainActivity, onResume");
+
+        loadPreferences();
+
+        /**
+         * Views initializations
+         */
 		if(isServiceRunning(FallDetectionService.class)){
 			onOffButton.setImageResource(R.drawable.on);
 			onOffTV.setText(R.string.detection_active);
@@ -181,7 +196,12 @@ public class MainActivity extends Activity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+
+            Intent intent=new Intent();
+            intent.setClass(MainActivity.this,SettingsActivity.class);
+            startActivity(intent);
             return true;
+
         }
         return super.onOptionsItemSelected(item);
     }
@@ -212,7 +232,7 @@ public class MainActivity extends Activity
         }
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
         	View rootViewDef = null;
         	if(getArguments().getInt(ARG_SECTION_NUMBER)==1){
@@ -223,16 +243,61 @@ public class MainActivity extends Activity
         		return rootView;
         	} else if (getArguments().getInt(ARG_SECTION_NUMBER)==2){
                 Log.d(TAG,"Main Activity, onCreateView, ARG_SECTION_NUMBER: 2");
-                View rootView = inflater.inflate(R.layout.fragmen_falls_list, container, false);
-                TextView nrFallsTV=(TextView)rootView.findViewById(R.id.totfalls);
-                TextView nrCancFallsTV=(TextView)rootView.findViewById(R.id.cancfalls);
+                final View rootView = inflater.inflate(R.layout.fragmen_falls_list, container, false);
+                nrFallsTV=(TextView)rootView.findViewById(R.id.totfalls);
+                nrCancFallsTV=(TextView)rootView.findViewById(R.id.cancfalls);
+                Button resetButton=(Button) rootView.findViewById(R.id.cancel_falls_list_button);
+
+
+
                 ListView fallsLV=(ListView) rootView.findViewById(R.id.fallsList);
                 ArrayList<FallEntry> falls=new ArrayList<FallEntry>();
                 SQLite sql=new SQLite(getActivity());
+
+                nrFallsTV.setText(String.valueOf(sql.getFallsNumber()));
+                Log.d(TAG,"nr of falls "+String.valueOf(sql.getFallsNumber()));
+                nrCancFallsTV.setText(String.valueOf(sql.getCancFallsNumber()));
+                Log.d(TAG,"nr of canc falls "+String.valueOf(sql.getCancFallsNumber()));
                 falls=sql.getAllFall();
-                nrFallsTV.setText(sql.getFallsNumber());
-                nrCancFallsTV.setText(sql.getCancFallsNumber());
                 fallsLV.setAdapter(new FallAdapter(inflater.getContext(), R.layout.fall,falls));
+
+
+                resetButton.setOnClickListener(new OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        new AlertDialog.Builder(getActivity())
+                                .setTitle("Delete Falls")
+                                .setMessage("Are you sure you want to delete all the fall data?")
+                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // continue with delete
+                                        SQLite sql=new SQLite(getActivity());
+                                        sql.deleteAllFalls();
+                                        ListView fallsLV=(ListView) rootView.findViewById(R.id.fallsList);
+                                        ArrayList<FallEntry> falls=new ArrayList<FallEntry>();
+
+                                        nrFallsTV.setText(String.valueOf(sql.getFallsNumber()));
+                                        Log.d(TAG,"nr of falls "+String.valueOf(sql.getFallsNumber()));
+                                        nrCancFallsTV.setText(String.valueOf(sql.getCancFallsNumber()));
+                                        Log.d(TAG,"nr of canc falls "+String.valueOf(sql.getCancFallsNumber()));
+                                        falls=sql.getAllFall();
+                                        fallsLV.setAdapter(new FallAdapter(inflater.getContext(), R.layout.fall,falls));
+
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // do nothing
+
+                                    }
+                                })
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .show();
+
+                    }
+                });
+
+
                 return rootView;
 
             } else if (getArguments().getInt(ARG_SECTION_NUMBER)==3){
@@ -248,7 +313,12 @@ public class MainActivity extends Activity
 //        			     numbers_text);  
 //        		sensorLV.setAdapter(adapter);  
         		return rootView;
-        	} else return rootViewDef;
+        	} else if (getArguments().getInt(ARG_SECTION_NUMBER)==4){
+                Log.d(TAG,"Main Activity, onCreateView, ARG_SECTION_NUMBER: 4");
+                View rootView = inflater.inflate(R.layout.activity_info, container, false);
+                return rootView;
+            }
+            else return rootViewDef;
         	
         }
 
@@ -279,6 +349,10 @@ public class MainActivity extends Activity
 //		}
 //};
 
+    /**
+     * Void for start/stop the fall detection service
+     * @param v
+     */
     public void onOff(View v){
     	Log.d(TAG, "MainActivity, onOff");
     	if(!detectionRunning){
@@ -309,20 +383,37 @@ public class MainActivity extends Activity
         }  
       };
 
+    /**
+     * Start the fall detection service and localization service
+     */
 	private void startFallDetectionService() {
 		Log.d(TAG, "MainActivity, startFallDetectionService");
 		Intent fallDetIntent=new Intent(FallDetectionService.ACTION_FOREGROUND);
 		fallDetIntent.setClass(MainActivity.this, FallDetectionService.class);
 		startService(fallDetIntent);
+        Intent locIntent=new Intent(LocationService.LOCATION_SERVICE);
+        locIntent.setClass(MainActivity.this, LocationService.class);
+        startService(locIntent);
 	}
-	
+
+    /**
+     * Start fall det serv and loc serv
+     */
 	private void stopFallDetectionService(){
     	Log.d(TAG,"MainActivity, stopFallDetectionService");
     	Intent fallDetIntent=new Intent();
     	fallDetIntent.setClass(MainActivity.this, FallDetectionService.class);
 		stopService(fallDetIntent);
+        Intent locIntent=new Intent();
+        locIntent.setClass(MainActivity.this,LocationService.class);
+        stopService(locIntent);
     }
-	
+
+    /**
+     * Check if a service is running or not; return true if running
+     * @param serviceClass
+     * @return boolean
+     */
     private boolean isServiceRunning(Class<?> serviceClass) {
         Log.i(TAG,"MainActivity, isServiceRunning");
     	ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -332,6 +423,44 @@ public class MainActivity extends Activity
             }
         }
         return false;
+    }
+
+    /**
+     * Open webistes
+     * @param v
+     */
+    public void siteUnivpm(View v){
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.univpm.it"));
+        startActivity(browserIntent);
+    }
+    public void siteWisense(View v){
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.wisense.it"));
+        startActivity(browserIntent);
+    }
+    public void siteGithub(View v){
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/pernin/CadAl"));
+        startActivity(browserIntent);
+    }
+
+
+    /**
+     * Load user preferences
+     */
+    private void loadPreferences(){
+        SharedPreferences mySharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        countdown=Integer.parseInt(mySharedPreferences.getString("countdown","20"));
+        //Log.d(TAG,
+        train=mySharedPreferences.getBoolean("training", false);
+        traintrue=mySharedPreferences.getBoolean("training_true",false);
+        trainfalse=mySharedPreferences.getBoolean("training_false",false);
+        notification=mySharedPreferences.getBoolean("notification",false);
+        name=mySharedPreferences.getString("myname","");
+        relnr1=mySharedPreferences.getString("relative_number1","0");
+        relnr2=mySharedPreferences.getString("relative_number2","0");
+        msg=mySharedPreferences.getString("custom_msg","Fall Detected!");
+
+
+        Log.d(TAG,"preferences: "+countdown+" "+name+" "+msg);
     }
 	
     

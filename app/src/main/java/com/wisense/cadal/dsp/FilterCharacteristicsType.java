@@ -13,7 +13,11 @@
 package com.wisense.cadal.dsp;
 
 /**
-* The filter characteristics type.
-*/
-public enum FilterCharacteristicsType {
-   butterworth, chebyshev, bessel};
+ * NOT USED NOW
+ */
+
+///**
+//* The filter characteristics type.
+//*/
+//public enum FilterCharacteristicsType {
+//   butterworth, chebyshev, bessel};

@@ -13,7 +13,11 @@
 package com.wisense.cadal.dsp;
 
 /**
-* The filter pass type.
-*/
-public enum FilterPassType {
-   lowpass, highpass, bandpass, bandstop };
+ * NOT USED NOW
+ */
+
+///**
+//* The filter pass type.
+//*/
+//public enum FilterPassType {
+//   lowpass, highpass, bandpass, bandstop };

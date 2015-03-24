@@ -1,9 +1,23 @@
 package com.wisense.cadal;
 
+import java.io.Serializable;
+
 /**
  * Created by lucapernini on 17/03/15.
+ * Describes a Fall Object for the database. Parameters are:
+ * String date
+ * int confirmed (1 confirmed, 0 not confirmed)
+ * int used for train (1 used, 0 not used)
+ * int notified (1 notified, 0 not notified)
+ * float maxrms
+ * float max filtered rms
+ * float max angle change
+ * float max variance of three angle changes arrays
+ * float max acc in z direction (referred to hearth frame)
+ * float sma
+ * float acc z variance
  */
-public class FallEntry {
+public class FallEntry implements Serializable{
 
     private static final String TAG="FALL DETECTION";
 

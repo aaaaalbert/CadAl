@@ -10,6 +10,18 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <android:uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <android:uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="18" />
 
     <application
         android:allowBackup="true"
@@ -17,9 +29,9 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.wisense.cadal.MainActivity"
+            android:name=".MainActivity"
             android:label="@string/app_name"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,7 +40,7 @@
         </activity>
 
         <service
-            android:name="com.wisense.cadal.FallDetectionService"
+            android:name=".FallDetectionService"
             android:enabled="true"
             android:exported="false"
             android:process=":lqRemote" >
@@ -38,10 +50,21 @@
         </service>
 
         <activity
-            android:name="com.wisense.cadal.AlertActivity"
+            android:name=".AlertActivity"
             android:label="@string/title_activity_alert"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait" >
         </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" >
+        </activity>
+
+        <service
+            android:name=".LocationService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
 </manifest>

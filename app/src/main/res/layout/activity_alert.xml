@@ -10,7 +10,7 @@
     tools:context="com.wisense.cadal.AlertActivity$PlaceholderFragment" >
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/titleAlertTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -24,7 +24,7 @@
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_alignLeft="@+id/cancelbutton"
-        android:layout_below="@+id/textView1"
+        android:layout_below="@+id/titleAlertTV"
         android:src="@drawable/icona" />
 
     <TextView

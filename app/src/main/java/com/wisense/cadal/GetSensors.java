@@ -12,15 +12,19 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 
+/**
+ * Return an ArrayList of SensorEntry
+ */
 public class GetSensors implements SensorEventListener{
 	
 	protected Context context;
 	
+    final static boolean DEBUG=true;
 	static String TAG="FALL_DETECTION";
 	
 	private SensorManager sensorManager;
 	
-	String[] sensorsS={"Accelerometro","Campo Magnetico","Giroscopio","Orientazione","Vett. Rot. Geom.","Gravità","Acc. Lineare","Vett. Rotazione","Movimenti","Contapassi","Rilev. Passo","Pressione","Temp. Ambiente","Umid. Relativa"};
+	String[] sensorsS={"Accelerometer","Magn.Field","Gyroscope","Orientation","Geom. Rot. Vector","Gravity","Linear Acc.","Rot. Vector","Movements","Pedometer","Step Detector","Barometer","Temperature","Rel. Umidity"};
 	boolean[] sensorsPresent={false,false,false,false,false,false,false,false,false,false,false,false,false,false};
 	int[] sensorTypes={Sensor.TYPE_ACCELEROMETER,Sensor.TYPE_MAGNETIC_FIELD,Sensor.TYPE_GYROSCOPE,Sensor.TYPE_ORIENTATION,Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR,Sensor.TYPE_GRAVITY,Sensor.TYPE_LINEAR_ACCELERATION,Sensor.TYPE_ROTATION_VECTOR,Sensor.TYPE_SIGNIFICANT_MOTION,Sensor.TYPE_STEP_COUNTER,Sensor.TYPE_STEP_DETECTOR, Sensor.TYPE_PRESSURE,Sensor.TYPE_AMBIENT_TEMPERATURE,Sensor.TYPE_RELATIVE_HUMIDITY};
 	String[] sensorsTypes=new String[sensorTypes.length];
@@ -89,11 +93,11 @@ public class GetSensors implements SensorEventListener{
 public ArrayList getSensorList(){
 	sensorManager=(SensorManager) context.getSystemService(context.SENSOR_SERVICE);
 	
-	Log.d(TAG,"GetSensors, getSensorList, sensorManager: "+sensorManager.toString());
+	if(DEBUG) Log.d(TAG,"GetSensors, getSensorList, sensorManager: "+sensorManager.toString());
 		
 		for (int i=0; i<sensorTypes.length;i++){
 			
-			Log.d(TAG,"GetSensors, getSensorList, i= "+Integer.toString(i)+", Sensore: "+sensorsS[i]);
+			if(DEBUG) Log.d(TAG,"GetSensors, getSensorList, i= "+Integer.toString(i)+", Sensor: "+sensorsS[i]);
 			
 			SensorEntry sensor=new SensorEntry();
 			
@@ -108,14 +112,14 @@ public ArrayList getSensorList(){
 				sensorsMaxRanges[i] = sensors.get(i).getMaximumRange();
 				sensorsPowers[i] = sensors.get(i).getPower();
 				sensorsResolutions[i] = sensors.get(i).getResolution();
-				Log.d(TAG,"GetSensors, getSensorList, Sensore: "+sensorsS[i]+", Name: "+sensorsNames[i]+", Vendor: "+sensorsVendors[i]+
+				if(DEBUG) Log.d(TAG,"GetSensors, getSensorList, Sensore: "+sensorsS[i]+", Name: "+sensorsNames[i]+", Vendor: "+sensorsVendors[i]+
 						", Min Delay: "+Integer.toString(sensorsMinDelayes[i])+", Max Range: "+Float.toString(sensorsMaxRanges[i])+
 						", Power: "+Float.toString(sensorsPowers[i])+", Resolution: "+Float.toString(sensorsResolutions[i]));
 			} catch (Exception e) {
 				
 				
 //				} else{
-					sensorsNames[i] = "Assente";
+					sensorsNames[i] = "Not present";
 					sensorsVendors[i] = "";
 					sensorsMinDelayes[i] = 0;
 					sensorsMaxRanges[i] = 0;

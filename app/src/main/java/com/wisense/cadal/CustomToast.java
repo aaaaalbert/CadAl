@@ -9,6 +9,9 @@ import android.view.View;
 import android.view.Window;
 import android.widget.TextView;
 
+/**
+ *Creates Custom Toasts - Not used actually
+ */
 public class CustomToast extends Dialog {  
 	 public CustomToast(Context context, String text) {  
 	  super(context);  

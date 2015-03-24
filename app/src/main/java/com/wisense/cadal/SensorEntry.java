@@ -1,6 +1,11 @@
 package com.wisense.cadal;
 
+/**
+ * Class that describes the sensors of the phone
+ */
+
 public class SensorEntry {
+
 	
 	public String sensorType;
 	public String sensorVendor;

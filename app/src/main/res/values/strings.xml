@@ -13,6 +13,7 @@
     <string name="detection_active">Fall Detection ON</string>
     <string name="detection_not_active">Fall Detection OFF</string>
     <string name="title_activity_alert">Alert</string>
-    <string name="hello_world">Hello world!</string>
+
+
 
 </resources>

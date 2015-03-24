@@ -1,3 +1,5 @@
 /Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/classes/debug
+/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/support-annotations-21.0.2-f3242ab86ebdd9838aa2273ef27653594b4ded72.jar
 /Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/libsvm-cc283d01cb45ebf65de96f1610ab397016a6351f.jar
-/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/support-v4-19.1.0-077324e57e09075c103066b4f937f62e97b2dc6d.jar
+/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/internal_impl-21.0.2-aa7be69fefc1b6aa4838946ef45d2b0a4b169d28.jar
+/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/classes-c015da8bca4aa70f0856a17fad54c55bbb0588de.jar

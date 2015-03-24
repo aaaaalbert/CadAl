@@ -15,16 +15,20 @@ import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.wisense.cadal.Algorithms.MahonyAHRSUpdateResponse;
+
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Locale;
 
-public class FallDetectionService extends Service implements SensorEventListener {
+public class FallDetectionService extends Service implements SensorEventListener  {
 
     /**
      * Debug String
      */
+    static final boolean DEBUG=true;
     String TAG = "FALL_DETECTION";
 
     /**
@@ -32,6 +36,9 @@ public class FallDetectionService extends Service implements SensorEventListener
      */
     static final String ACTION_FOREGROUND = "com.wisense.cadal.FallDetectionService.FOREGROUND";
 
+    /**
+     * Sampling time
+     */
     int samplingTime = 25;
 
     /**
@@ -64,7 +71,7 @@ public class FallDetectionService extends Service implements SensorEventListener
      * Raw Data
      */
     float[] acc = new float[3];
-    float[] gyr = new float[3];
+    float[] gyr = new float[3]; //Not used
     float[] mag = new float[3];
     //	float[] ori=new float[3]; NOT USED
 //	float[] quat=new float[4]; NOT USED
@@ -84,10 +91,14 @@ public class FallDetectionService extends Service implements SensorEventListener
 //	float inclination; NOT USED
 //	float[] Q=new float[4]; NOT USED
 //	double filtZAcc=0; NOT USED
+    /*
+    Arrays for 160 previous samples and 160 next samples. When a fall is detected the two arrays of every feature are
+    concatenated and elaborated. Represents 2seconds and 2 seconds of acquisition
+     */
     int preWindow=160;
     int postWindow=160;
     float[] last2SecondsZAcceleration = new float[(int) 2000 / samplingTime];
-    float[] last80SamplesAccelerationX = new float[preWindow]; //in realtà ne tengo in memoria di più in modo da evitare il transitorio del filtro
+    float[] last80SamplesAccelerationX = new float[preWindow]; //
     float[] last80SamplesAccelerationY = new float[preWindow];
     float[] last80SamplesAccelerationZ = new float[preWindow];
     float[] last80SamplesMagneticFieldX = new float[preWindow];
@@ -131,7 +142,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "FallDetectionService, onBind");
+        if(DEBUG) Log.d(TAG, "FallDetectionService, onBind");
         return null;
     }
 
@@ -141,16 +152,18 @@ public class FallDetectionService extends Service implements SensorEventListener
 
         super.onCreate();
 
-        Log.d(TAG, "FallDetectionService, onCreate");
+        if(DEBUG) Log.d(TAG, "FallDetectionService, onCreate");
 
-        algo = new Algorithms();
+        //algo = new Algorithms(); not used
 
+        //MANTAINS THE SERVICE IN EXECUTION
         PowerManager pm = (PowerManager) getSystemService(getApplicationContext().POWER_SERVICE);
         mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "falldetection");
         mWakeLock.acquire();
 
         registerSensors();
 
+        //STARTS THE ELABORATION THREAD
         eThread = new ElaborationThreadRotationAndOrientation();
         eThread.start();
 
@@ -160,11 +173,11 @@ public class FallDetectionService extends Service implements SensorEventListener
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        Log.d(TAG, "FallDetectionService, onSTartCommand");
+        if(DEBUG) Log.d(TAG, "FallDetectionService, onSTartCommand");
 
         try {
             if (ACTION_FOREGROUND.equals(intent.getAction())) {
-                Log.d(TAG, "FallDetectionService, starting service in foreground");
+                if(DEBUG) Log.d(TAG, "FallDetectionService, starting service in foreground");
                 startForeground(1, getCompatNotification());
                 //Intent intentDisplayActiviy=new Intent(FallDetectionService.this)
             }
@@ -175,6 +188,11 @@ public class FallDetectionService extends Service implements SensorEventListener
 
     }
 
+    /**
+     * When the service is in execution a notfication is present in Android. When the user click on notification
+     * MainActivity is launched
+     * @return
+     */
     private Notification getCompatNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_launcher)
@@ -189,7 +207,9 @@ public class FallDetectionService extends Service implements SensorEventListener
 
     }
 
-
+    /**
+     * Release wakelock option and unregister sensors
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -198,7 +218,9 @@ public class FallDetectionService extends Service implements SensorEventListener
         stopSelf();
     }
 
-
+    /**
+     * Register Accelerometer and Magnetometer
+     */
     public void registerSensors() {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(
@@ -218,11 +240,17 @@ public class FallDetectionService extends Service implements SensorEventListener
         sensorsRegistered = true;
     }
 
+    /**
+     * Unregister the sensors
+     */
     public void unregisterSensors() {
         sensorManager.unregisterListener(this);
         sensorsRegistered = false;
     }
 
+    /**
+     * Obtain a list of sensors. Not used here (see sensors fragment in mainactivity and GetSensors class)
+     */
     public void getSensors() {
         for (int i = 0; i < sensorTypes.length; i++) {
             if (sensorsPresent[i]) {
@@ -245,6 +273,11 @@ public class FallDetectionService extends Service implements SensorEventListener
     }
 
 
+    /**
+     * When new data are availables, these are stored in a 2 elements array (data are alternatively saved in the two positions
+     * This is useful to remain separate functions of acquisition and processing
+     * @param event
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         // TODO Auto-generated method stub
@@ -261,7 +294,7 @@ public class FallDetectionService extends Service implements SensorEventListener
             accData[0][alternateAcc] = event.values[0];
             accData[1][alternateAcc] = event.values[1];
             accData[2][alternateAcc] = event.values[2];
-            //Log.d(TAG,"FallDetectionService, onSensorChanged, z acc: "+Float.toString(accData[2][alternateAcc]));
+            //if(DEBUG) Log.d(TAG,"FallDetectionService, onSensorChanged, z acc: "+Float.toString(accData[2][alternateAcc]));
             if (alternateAcc == 0) {
                 alternateAcc = 1;
             } else alternateAcc = 0;
@@ -282,7 +315,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 //			sensData[10]=event.values[0];
         } else if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
 //			sensData[10]=event.values[0];
-//			Log.d(TAG,"FallDetectionService, onSensorChanged, TYPE_LINEAR_ACCELERATION");
+//			if(DEBUG) Log.d(TAG,"FallDetectionService, onSensorChanged, TYPE_LINEAR_ACCELERATION");
 //			linAccData[0][alternateLinAcc]=event.values[0];
 //			linAccData[1][alternateLinAcc]=event.values[1];
 //			linAccData[2][alternateLinAcc]=event.values[2];
@@ -299,55 +332,57 @@ public class FallDetectionService extends Service implements SensorEventListener
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        Log.d(TAG, "FalldetectionService, AccuracyChanged");
+        if(DEBUG) Log.d(TAG, "FalldetectionService, AccuracyChanged");
     }
 
     /**
      * @author Luca
      *         Not used
      */
-    public class ElaborationThread extends Thread {
-        public void run() {
-            Log.d(TAG, "FallDetectionService, ElaborationThread");
-            boolean running = true;
-            iteration = 0;
-
-            while (running) {
-
-                if (!sensorsRegistered) running = false;
-
-                if (iteration == 0) {
-                    startTime = System.nanoTime();
-                    algo.initAlgorithms();
-                }
-                iteration++;
-                try {
-                    sleep(25);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                float time = (System.nanoTime() - startTime);
-                algo.MahonyAHRSUpdate(sensData, time);
-                MahonyAHRSUpdateResponse mahonyAHRSUpdateResponse = algo.new MahonyAHRSUpdateResponse();
-                float[] angles = mahonyAHRSUpdateResponse.getYpr();
-                float[] acc = Arrays.copyOfRange(sensData, 3, 6);
-                float[] acc_sep = algo.getAcc_Separate(
-                        mahonyAHRSUpdateResponse.getQuat(), acc);
-                float[] acc_rot = algo.getEarthFrameVector(mahonyAHRSUpdateResponse.getQuat(), acc_sep);
-                algo.print();
-            }
-        }
-    }
+//    public class ElaborationThread extends Thread {
+//        public void run() {
+//            if(DEBUG) Log.d(TAG, "FallDetectionService, ElaborationThread");
+//            boolean running = true;
+//            iteration = 0;
+//
+//            while (running) {
+//
+//                if (!sensorsRegistered) running = false;
+//
+//                if (iteration == 0) {
+//                    startTime = System.nanoTime();
+//                    algo.initAlgorithms();
+//                }
+//                iteration++;
+//                try {
+//                    sleep(25);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                float time = (System.nanoTime() - startTime);
+//                algo.MahonyAHRSUpdate(sensData, time);
+//                MahonyAHRSUpdateResponse mahonyAHRSUpdateResponse = algo.new MahonyAHRSUpdateResponse();
+//                float[] angles = mahonyAHRSUpdateResponse.getYpr();
+//                float[] acc = Arrays.copyOfRange(sensData, 3, 6);
+//                float[] acc_sep = algo.getAcc_Separate(
+//                        mahonyAHRSUpdateResponse.getQuat(), acc);
+//                float[] acc_rot = algo.getEarthFrameVector(mahonyAHRSUpdateResponse.getQuat(), acc_sep);
+//                algo.print();
+//            }
+//        }
+//    }
 
     /**
-     * Thread for elaboration of accelerometer and magnetometer signals
+     * Thread for first elaboration of accelerometer and magnetometer signals
+     * Controls if rms is over threshold; eventually stores next 160 samples and elaborates the 320 ssamples signals
+     *
      *
      * @author Luca
      */
     public class ElaborationThreadRotationAndOrientation extends Thread {
 
         public void run() {
-            Log.d(TAG, "FallDetectionService, ElaborationThreadRotationAndOrientation");
+            if(DEBUG) Log.d(TAG, "FallDetectionService, ElaborationThreadRotationAndOrientation");
             boolean running = true;
             iteration = 0;
             //WriteDataFile write = new WriteDataFile(); //TODO SCOMMENTARE PER USARLO
@@ -365,7 +400,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 
                 if (iteration == 0) {
                     startTime = System.nanoTime();
-                    //write.newFile2(); //TODO SCOMMENTARE PER APRIRE IL FILE DA SCRIVERE
+                    //write.newFile2();
                 }
                 iteration++;
                 try {
@@ -396,7 +431,9 @@ public class FallDetectionService extends Service implements SensorEventListener
                             mag[i] = magData[i][0];
                         }
                     }
-
+                /*
+                Old Methods
+                 */
 //				//1) GREZZA --> LINEARE --> RUOTATA --> FILTRATA, rotation matrix su accelerazione grezza
 //				//calcolo accelerazione lineare
 //				float[] acc_=algo.getLinearAcceleration(acc);
@@ -432,7 +469,9 @@ public class FallDetectionService extends Service implements SensorEventListener
 //				timeA[0]=time;
 //				write.writeData(acc,rms_,acc_,rotacc_,mag,angleChangeacc,filtZacc_rV,timeA);
 
-                    //METODO PAPER
+                    /*
+                    Paper method
+                     */
                     //compute rms over raw acceleration to find possible fall events.
                     float[] rms_raw = new float[1];
                     rms_raw[0] = (float) ((Math.sqrt(Math.pow(acc[0], 2) + Math.pow(acc[1], 2) + Math.pow(acc[2], 2))) / 9.81);
@@ -490,7 +529,7 @@ public class FallDetectionService extends Service implements SensorEventListener
                     }
 
                     if (rms_raw[0] > 2 && !overTh) {
-                        Log.d(TAG, "FallDetectionservice: rms over threshold!!!!");
+                        if(DEBUG) Log.d(TAG, "FallDetectionservice: rms over threshold!!!!");
                         overTh = true; //flag che mi serve per sapere che ho superato la soglia e quindi dovr� salvarmi i successivi 60 campioni.
 
                     }
@@ -509,13 +548,9 @@ public class FallDetectionService extends Service implements SensorEventListener
 
 
 
-
-                    if (iteration == 50) {
-//					Intent alertIntent=new Intent();
-//					alertIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//					alertIntent.setClass(FallDetectionService.this, AlertActivity.class);
-//					startActivity(alertIntent);
-                    }
+/*
+Old method
+ */
 
                     //4) GREZZA --> FILTRATA (filtro anche mag) --> LINEARE --> RUOTATA --> , rotation matrix su accelerazione filtrata
                     //calcolo accelerazione filtrata (tutte e 3 le componenti)
@@ -586,7 +621,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 //				rms[0]= (float) ((Math.sqrt(Math.pow(linAccData[0], 2)+Math.pow(linAccData[1], 2)+Math.pow(linAccData[2], 2)))/9.81);
 //								
 //				boolean rotMatrix=SensorManager.getRotationMatrix(R, I, acc, mag);
-//				//Log.d(TAG,"FallDetectionService, ElaborationThreadRotationAndOrientation, acc z: "+Float.toString(acc[2]));
+//				//if(DEBUG) Log.d(TAG,"FallDetectionService, ElaborationThreadRotationAndOrientation, acc z: "+Float.toString(acc[2]));
 //				
 //				
 //				
@@ -604,7 +639,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 //				//SensorManager.getOrientation(R, accRot);
 //				
 //				//SensorManager.getQuaternionFromVector(Q, accRot);
-//				//Log.d(TAG,"FallDetectionService, ElaborationThreadRotationAndOrientation, Q: "+Q.length);
+//				//if(DEBUG) Log.d(TAG,"FallDetectionService, ElaborationThreadRotationAndOrientation, Q: "+Q.length);
 //				//+Float.toString(Q[0])+Float.toString(Q[1])+Float.toString(Q[2])+Float.toString(Q[3]));
 //				
 //				SensorManager.getAngleChange(angleChange, R, prevR);
@@ -617,7 +652,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 //				//float filtZAccF=(float) filtZAcc;
 //				float[] filtZAccFV=new float[1];
 //				filtZAccFV[0]= (float) filtZAcc;
-//				//Log.d(TAG,"FallDetectionService, ElaborationThreadRotationAndOrientation, filtZAcc: "+Double.toString(filtZAcc)+"   "+Float.toString(filtZAccF)+"   "+Float.toString(filtZAccFV[0]));
+//				//if(DEBUG) Log.d(TAG,"FallDetectionService, ElaborationThreadRotationAndOrientation, filtZAcc: "+Double.toString(filtZAcc)+"   "+Float.toString(filtZAccF)+"   "+Float.toString(filtZAccFV[0]));
 //				
 //				storeRotAcc(rotAcc[2]); //quale memorizzo? quella filtrata?
 //				if(rms[0]>2) calculateZDistance();
@@ -629,6 +664,10 @@ public class FallDetectionService extends Service implements SensorEventListener
         }
     }
 
+    /**
+     * Not used
+     * @param rotAccZ
+     */
     void storeRotAcc(float rotAccZ) {
         float[] last2SecondsZAccelerationNew = new float[(int) 2000 / samplingTime];
         last2SecondsZAccelerationNew = shiftLeft(last2SecondsZAcceleration, 1);
@@ -636,6 +675,11 @@ public class FallDetectionService extends Service implements SensorEventListener
         last2SecondsZAcceleration = last2SecondsZAccelerationNew;
     }
 
+    /**
+     * Store last sample of acceleration ang magnetic field in the arrays
+     * @param accel
+     * @param magn
+     */
     void storeLastAccAndMag(float[] accel, float[] magn) {
 //		float[] last60SamplesAccelerationNewX= new float[60];
 //		float[] last60SamplesAccelerationNewY= new float[60];
@@ -658,6 +702,12 @@ public class FallDetectionService extends Service implements SensorEventListener
         last80SamplesMagneticFieldZ[last80SamplesMagneticFieldZ.length - 1] = accel[2];
     }
 
+    /**
+     * Shift an array to left
+     * @param arr
+     * @param shift
+     * @return
+     */
     static float[] shiftLeft(float[] arr, int shift) {
         float[] tmp = new float[arr.length];
         System.arraycopy(arr, shift, tmp, 0, arr.length - shift);
@@ -665,6 +715,12 @@ public class FallDetectionService extends Service implements SensorEventListener
         return tmp;
     }
 
+    /**
+     * Store next 160 samples of acceleration and magnetic field. Is controlled in ElaborationThreadRotationAndOrientation
+     * with the storingiter index. Not the best solution, i know.
+     * @param acc
+     * @param mag
+     */
     public void storeNextAccAndMag(float[] acc, float[] mag) {
         next80SamplesAccelerationX[storingIter] = acc[0];
         next80SamplesAccelerationY[storingIter] = acc[1];
@@ -675,6 +731,9 @@ public class FallDetectionService extends Service implements SensorEventListener
     }
 
 
+    /**
+     * Not used
+     */
     public void calculateZDistance() {
         //implementare qui la doppia integrazione (sul vettore last2seconds ecc ecc)
         // lo chiamo solo quando l'rms supera una certa soglia
@@ -688,27 +747,32 @@ public class FallDetectionService extends Service implements SensorEventListener
 
     }
 
-    class ElaborationTask extends AsyncTask<Void, String, Void> {
-        @Override
-        protected Void doInBackground(Void... unused) {
 
-            return (null);
-        }
+//    class ElaborationTask extends AsyncTask<Void, String, Void> {
+//        @Override
+//        protected Void doInBackground(Void... unused) {
+//
+//            return (null);
+//        }
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//
+//
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Void aVoid) {
+//            super.onPostExecute(aVoid);
+//
+//        }
+//    }
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-
-        }
-    }
-
+    /**
+     * Calculates the parameters for the svm method, execute the svm, eventually launch AlertActivity, and save the signals of the
+     * detected probably fall in a csv file.
+     */
     private void calcParameters() {
 
         float[] accX = concatArray(last80SamplesAccelerationX, next80SamplesAccelerationX);
@@ -750,7 +814,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 
 
         angley=cutArray(angley,rmsMaxi);
-        Log.d(TAG,"cutted length: "+angley.length);
+        if(DEBUG) Log.d(TAG,"cutted length: "+angley.length);
         anglep=cutArray(anglep,rmsMaxi);
         angler=cutArray(angler,rmsMaxi);
         accX=cutArray(accX,rmsMaxi);
@@ -788,7 +852,7 @@ public class FallDetectionService extends Service implements SensorEventListener
         String svm_test="-1 "+"1:"+Float.toString(rmsMax)+" 2:"+Float.toString(drmsMax)+" 3:"+Float.toString(maxA)+" 4:"+
                 Float.toString(maxVarA)+" 5:"+Float.toString(maxRLFAccZ)+" 6:"+Float.toString(smaRLFAccz)+" 7:"+Float.toString(varRLFAccz);
 //
-        Log.d(TAG,"Fall Detection computing --> svm: "+svm_test);
+        if(DEBUG) Log.d(TAG,"Fall Detection computing --> svm: "+svm_test);
         SVM svm=new SVM(this);
         boolean fall=false;
         try {
@@ -797,14 +861,27 @@ public class FallDetectionService extends Service implements SensorEventListener
             e.printStackTrace();
         }
         if(fall){
-                    Log.d(TAG,"intent to alertactivity");
+            FallEntry fallEntry=new FallEntry();
+            fallEntry.setDate(getDate());
+            fallEntry.setConfirmed(0);
+            fallEntry.setNotified(0);
+            fallEntry.setMaxrms(rmsMax);
+            fallEntry.setMaxfrms(drmsMax);
+            fallEntry.setMaxangle(maxA);
+            fallEntry.setVarangle(maxVarA);
+            fallEntry.setMaxaz(maxRLFAccZ);
+            fallEntry.setSma(smaRLFAccz);
+            fallEntry.setVaraz(varRLFAccz);
+
+                    if(DEBUG) Log.d(TAG,"intent to alertactivity");
             		Intent alertIntent=new Intent();
 					alertIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 					alertIntent.setClass(FallDetectionService.this, AlertActivity.class);
                     alertIntent.putExtra("svm",svm_test);
+                    alertIntent.putExtra("fallentry",fallEntry);
 					startActivity(alertIntent);
         } else {
-            Log.d(TAG,"not a fall");
+            if(DEBUG) Log.d(TAG,"not a fall");
         }
 
         WriteDataFile write = new WriteDataFile(); //TODO SCOMMENTARE PER USARLO
@@ -863,13 +940,13 @@ public class FallDetectionService extends Service implements SensorEventListener
      * @return array of float where array[0] is the max value and array[1] is the position
      */
     private float[] maxRMS(float[] rms){
-        //Log.d(TAG,"maxRMS, length: "+rms.length);
+        //if(DEBUG) Log.d(TAG,"maxRMS, length: "+rms.length);
         float[] maxRMS= new float[2];
         maxRMS[0]=0;
         maxRMS[1]=0;
 
         for (int i=0;i<rms.length;i++){
-            //Log.d(TAG,Float.toString(rms[i]));
+            //if(DEBUG) Log.d(TAG,Float.toString(rms[i]));
             if (rms[i]>maxRMS[0]){
 
                 maxRMS[0]=rms[i];
@@ -877,11 +954,18 @@ public class FallDetectionService extends Service implements SensorEventListener
             }
         }
 
-        Log.d(TAG,"maxRMS: "+Float.toString(maxRMS[0])+" centered at "+Float.toString(maxRMS[1]));
+        if(DEBUG) Log.d(TAG,"maxRMS: "+Float.toString(maxRMS[0])+" centered at "+Float.toString(maxRMS[1]));
         return maxRMS;
 
     }
 
+    /**
+     * Return the max of the angle changes passed (yaw pitch and roll)
+     * @param angley
+     * @param anglep
+     * @param angler
+     * @return
+     */
     private float maxAngle(float[] angley, float[] anglep, float[] angler){
         float[] max = new float[3];
         max[0]=maxValue(angley)[0];
@@ -916,7 +1000,7 @@ public class FallDetectionService extends Service implements SensorEventListener
      * @return cutted array of float
      */
     private float[] cutArray(float[] array, int center){
-        Log.d(TAG,"cutArray, center: "+Integer.toString(center));
+        //if(DEBUG) Log.d(TAG,"cutArray, center: "+Integer.toString(center));
         return Arrays.copyOfRange(array, center-80, center+80);
     }
 
@@ -936,7 +1020,7 @@ public class FallDetectionService extends Service implements SensorEventListener
 
         for (int i=0; i<fsig.length;i++){
             fsig[i]=(float) iirFilter.step(sig[i]);
-            //Log.d(TAG,"filter: "+fsig[i]+" "+sig[i]);
+            //if(DEBUG) Log.d(TAG,"filter: "+fsig[i]+" "+sig[i]);
         }
 
         return fsig;
@@ -1030,13 +1114,20 @@ public class FallDetectionService extends Service implements SensorEventListener
                 gravity[i]=alpha*gravity[i-1]+(1-alpha)*acc[i];
                 linear_acceleration[i]=acc[i]-gravity[i];
             }
-            //Log.d(TAG,"linear: "+acc[i]+" "+linear_acceleration[i]);
+            //if(DEBUG) Log.d(TAG,"linear: "+acc[i]+" "+linear_acceleration[i]);
 
         }
 
         return linear_acceleration;
     }
 
+    /**
+     * Return the max variance of the threee angles changes arrays
+     * @param angley
+     * @param anglep
+     * @param angler
+     * @return
+     */
     public float getMaxAngleVar(float[] angley, float[] anglep, float[] angler){
         float[] angleVar=new float[3];
         angleVar[0]=getVariance(angley);
@@ -1045,6 +1136,11 @@ public class FallDetectionService extends Service implements SensorEventListener
         return maxValue(angleVar)[0];
     }
 
+    /**
+     * return the variance of an array
+     * @param array
+     * @return
+     */
     public float getVariance(float[] array){
 
         Statistics stat= new Statistics(array);
@@ -1052,7 +1148,11 @@ public class FallDetectionService extends Service implements SensorEventListener
     }
 
 
-
+    /**
+     * Return the integral value with trapz method
+     * @param array
+     * @return
+     */
     public float getTrapZ(float[] array){
 
 
@@ -1071,15 +1171,20 @@ public class FallDetectionService extends Service implements SensorEventListener
         return trapz;
     }
 
+    /**
+     * return the actual date in yyyy/MM/dd HH:mm format
+     * @return date (String)
+     */
+    public String getDate(){
+
+        Date date=new Date();
+        String format="yyyy/MM/dd HH:mm";
+        SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.ITALY);
+
+        String now=sdf.format(date);
+        return now;
+    }
 
 
-
-
-	
-	
-	
-
-	
-	
 
 }

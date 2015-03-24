@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:layout_gravity="center"
-        android:text="Lista Sensori"
+        android:text="Sensor List"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <ListView

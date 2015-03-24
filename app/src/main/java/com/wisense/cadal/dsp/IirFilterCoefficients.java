@@ -13,30 +13,34 @@
 package com.wisense.cadal.dsp;
 
 /**
-* The coefficients for an IIR filter.
-*
-* <p>
-* Filter schema: <a href="http://commons.wikimedia.org/wiki/File:IIR_Filter_Direct_Form_1.svg">Wikipedia</a>
-*
-* <p>
-* Formula:
-* <pre>
-*    y[i] = x[i] * b[0]  +  x[i-1] * b[1]  +  x[i-2] * b[2]  +  ...
-*                        -  y[i-1] * a[1]  -  y[i-2] * a[2]  -  ...
-* </pre>
-* (x = input, y = output, a and b = filter coefficients, a[0] must be 1)
-*
-*/
-public class IirFilterCoefficients {
-
-/**
-* A coefficients, applied to output values (negative).
-*/
-public double[]              a;
-
-/**
-* B coefficients, applied to input values.
-*/
-public double[]              b;
-
-}
+ * NOT USED NOW
+ */
+//
+///**
+//* The coefficients for an IIR filter.
+//*
+//* <p>
+//* Filter schema: <a href="http://commons.wikimedia.org/wiki/File:IIR_Filter_Direct_Form_1.svg">Wikipedia</a>
+//*
+//* <p>
+//* Formula:
+//* <pre>
+//*    y[i] = x[i] * b[0]  +  x[i-1] * b[1]  +  x[i-2] * b[2]  +  ...
+//*                        -  y[i-1] * a[1]  -  y[i-2] * a[2]  -  ...
+//* </pre>
+//* (x = input, y = output, a and b = filter coefficients, a[0] must be 1)
+//*
+//*/
+//public class IirFilterCoefficients {
+//
+///**
+//* A coefficients, applied to output values (negative).
+//*/
+//public double[]              a;
+//
+///**
+//* B coefficients, applied to input values.
+//*/
+//public double[]              b;
+//
+//}

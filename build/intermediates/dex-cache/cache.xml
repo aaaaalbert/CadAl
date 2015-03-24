@@ -2,11 +2,18 @@
 <items version="2" >
 
     <item
-        jar="/Users/lucapernini/Desktop/Luca/Sotfwares/Eclipse/sdk/extras/android/m2repository/com/android/support/support-v4/19.1.0/support-v4-19.1.0.jar"
+        jar="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.2/classes.jar"
         jumboMode="false"
         revision="21.1.1"
-        sha1="85f201b380937e61a9dce6ca90ccf6872abbfb67">
-        <dex dex="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/support-v4-19.1.0-077324e57e09075c103066b4f937f62e97b2dc6d.jar" />
+        sha1="d1bf02de1c56d942e7a9d093b8610ba1ef4128e3">
+        <dex dex="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/classes-c015da8bca4aa70f0856a17fad54c55bbb0588de.jar" />
+    </item>
+    <item
+        jar="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.2/libs/internal_impl-21.0.2.jar"
+        jumboMode="false"
+        revision="21.1.1"
+        sha1="962e8b12569c56dbdcf8367eb4eac8bb129cd18f">
+        <dex dex="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/internal_impl-21.0.2-aa7be69fefc1b6aa4838946ef45d2b0a4b169d28.jar" />
     </item>
     <item
         jar="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/libs/libsvm.jar"
@@ -14,6 +21,13 @@
         revision="21.1.1"
         sha1="5a763e981994e688c5a764630277a4a41ff980f6">
         <dex dex="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/libsvm-cc283d01cb45ebf65de96f1610ab397016a6351f.jar" />
+    </item>
+    <item
+        jar="/Users/lucapernini/Desktop/Luca/Sotfwares/Eclipse/sdk/extras/android/m2repository/com/android/support/support-annotations/21.0.2/support-annotations-21.0.2.jar"
+        jumboMode="false"
+        revision="21.1.1"
+        sha1="99373741f99a0556ee293c41e8faa1ca3ae8a4e6">
+        <dex dex="/Users/lucapernini/Desktop/Luca/AndroidStudioProjects/CadAl/app/build/intermediates/pre-dexed/debug/support-annotations-21.0.2-f3242ab86ebdd9838aa2273ef27653594b4ded72.jar" />
     </item>
 
 </items>
